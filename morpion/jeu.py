@@ -3,10 +3,10 @@ from tsanap import *
 class gameEnded(Exception): ...
 class morpion:
     p1, p2, p3, p4 = [screen[0]/2-screen[1]/2, 0], [screen[0]/2+screen[1]/2, 0], [screen[0]/2-screen[1]/2, screen[1]], [screen[0]/2+screen[1]/2, screen[1]]
-    def __init__(self, name="Morpion", j1="J1", j2="J2") -> None:
+    def __init__(self, name="Morpion") -> None:
         self.name, self.trait, self.scores, self.n_parties = name, True, [0, 0], 0
         self.matrix = np.array([[0 for _ in range(3)] for _ in range(3)])
-        self.j1, self.j2 = j1, j2
+        self.ready = False
     def restart(self) -> None:
         self.n_parties += 1
         self.trait = self.n_parties%2 == 0
