@@ -1,6 +1,5 @@
 from tsanap import *
 
-class gameEnded(Exception): ...
 class morpion:
     p1, p2, p3, p4 = [screen[0]/2-screen[1]/2, 0], [screen[0]/2+screen[1]/2, 0], [screen[0]/2-screen[1]/2, screen[1]], [screen[0]/2+screen[1]/2, screen[1]]
     def __init__(self, name="Morpion") -> None:
@@ -43,4 +42,3 @@ class morpion:
         if self.matrix[pos[0],pos[1]] == 0:
             self.matrix[pos[0],pos[1]] = 1 if self.trait else 2
             self.trait = not self.trait
-            if self.winned() or not self.playable(): raise gameEnded
