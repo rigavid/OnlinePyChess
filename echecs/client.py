@@ -17,7 +17,7 @@ def main(ip_port=None):
         cv2.setMouseCallback(img.nom, get_mouse, m)
         fs = True if ip_port else False
         timer = time.time()
-        while True:
+        while True: ## DONE Show image
             wk = img.montre(1, fullscreen=fs)
             if img.is_closed(): break
             match wk:

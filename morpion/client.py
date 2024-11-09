@@ -69,7 +69,7 @@ def main(ip_port=None):
                             m:morpion = request(client, "GET")
                             img = image_of(m)
                             cv2.setMouseCallback(img.nom, get_mouse, m)
-                    else: # TODO
+                    else:
                         mouse.click = False
                         img = get_img(cli)
                         img.ecris("Replay?", ct, col.black, 5, 3, cv2.FONT_HERSHEY_SIMPLEX, 2)
