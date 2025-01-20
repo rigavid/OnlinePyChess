@@ -13,8 +13,8 @@ def main(ip_port=None):
         print(f"Connected as {ID}")
         img = ... # TODO
         img.montre(1)
-        if ip_port: cv2.moveWindow(img.nom, 0 if ID == 0 else 1920, 0)
-        cv2.setMouseCallback(img.nom, get_mouse, m)
+        if ip_port: cv2.moveWindow(img.name, 0 if ID == 0 else 1920, 0)
+        cv2.setMouseCallback(img.name, get_mouse, m)
         fs = True if ip_port else False
         timer = time.time()
         while True: ## DONE Show image

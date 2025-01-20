@@ -1,7 +1,7 @@
 from multiprocessing.connection import Client
 try: from morpion.jeu import morpion
 except: from jeu import morpion
-from tsanap import *
+from pyimager import *
 import time, sys
 
 class mouse: click = False
@@ -20,12 +20,12 @@ def request(cli:Client, req:str):
 def image_of(m:morpion) -> image:
     global ID
     img = m.image()
-    img.nom = f"{img.nom}.{ID}"
+    img.name = f"{img.name}.{ID}"
     return img
 def get_img(cli:Client) -> image:
     global ID
     img:image = request(cli, "IMG")
-    img.nom = f"{img.nom}.{ID}"
+    img.name = f"{img.name}.{ID}"
     return img
 def get_game(cli:Client) -> morpion:
     return request(cli, "GET")
@@ -40,17 +40,14 @@ def main(ip_port=None):
         print(f"Connected as {ID}")
         m = get_game(client)
         img = image_of(m)
-        img.montre(1)
-        if ip_port: cv2.moveWindow(img.nom, 0 if ID == 0 else 1920, 0)
-        cv2.setMouseCallback(img.nom, get_mouse, m)
-        fs = True if ip_port else False
+        img.build()
+        if ip_port: cv2.moveWindow(img.name, 0 if ID == 0 else 1920, 0)
+        cv2.setMouseCallback(img.name, get_mouse, m)
         timer = time.time()
-        while True:
-            wk = img.montre(1, fullscreen=fs)
-            if img.is_closed(): break
+        while img.is_opened():
+            wk = img.show(1)
             match wk:
                 case 27: break
-                case 32: fs = not fs
                 case 114: img = get_img(client)
             if m.ready:
                 if mouse.click: ## Play
@@ -68,15 +65,15 @@ def main(ip_port=None):
                         elif m.trait != trait:
                             m:morpion = request(client, "GET")
                             img = image_of(m)
-                            cv2.setMouseCallback(img.nom, get_mouse, m)
+                            cv2.setMouseCallback(img.name, get_mouse, m)
                     else:
                         mouse.click = False
                         img = get_img(cli)
                         img.ecris("Replay?", ct, col.black, 5, 3, cv2.FONT_HERSHEY_SIMPLEX, 2)
                         p1, p2 = ct_cg(cg, ct_sg(ch, ct)), ct_cg(cd, ct_sg(cb, ct))
-                        cv2.setMouseCallback(img.nom, mouse_replay, (p1, p2))
+                        cv2.setMouseCallback(img.name, mouse_replay, (p1, p2))
                         while not img.is_closed():
-                            wk = img.montre(1, fullscreen=fs)
+                            wk = img.show(1, fullscreen=fs)
                             match wk:
                                 case 27: return
                                 case 32: fs = not fs
