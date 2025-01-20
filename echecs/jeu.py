@@ -3,7 +3,7 @@
 ## Date: 9/11/24 ##
 ###################
 
-from tsanap import *
+from pyimager import *
 
 class mouse: click, case = False, None
 def get_mouse(event, x, y, flags, params) -> None:
@@ -30,35 +30,30 @@ class echecs:
         self.res = res
     def image(self) -> image:
         p1, p2, p3, p4, pt1, pt2, pt3, pt4 = self.p1, self.p2, self.p3, self.p4, self.pt1, self.pt2, self.pt3, self.pt4
-        img = image(img=image.new_img(dimensions=self.res, fond=col.cyan))
-        img.rectangle(p1, p4, col.new("DEB887"), 0, 2) ## Plateau
+        img = new_img(self.res, COL.cyan, "PyChess")
+        img.rectangle(p1, p4, COL.new("DEB887"), 0, 2) ## Plateau
         for a, b in ((p1, pt1), (p2, pt2), (p3, pt3), (p4, pt4)): ## Coins du plateau
-            img.rectangle(a, b, col.new("80360a"), 0, 2)
-            img.rectangle(a, b, col.black, 5, 2)
-        img.rectangle(p1, p4, col.black, 6, 2) 
-        img.rectangle(pt1, pt4, col.black, 6, 2)
+            img.rectangle(a, b, COL.new("80360a"), 0, 2)
+            img.rectangle(a, b, COL.black, 5, 2)
+        img.rectangle(p1, p4, COL.black, 6, 2) 
+        img.rectangle(pt1, pt4, COL.black, 6, 2)
         return img
 
 def main():
     resolutions = [(1920, 1080), (1680, 1050)]; r_i = 0
     jeu = echecs()
     print(jeu)
-    img, fs = jeu.image(), False
-    img.montre(1)
-    cv2.setMouseCallback(img.nom, get_mouse)
-    while not img.is_closed():
-        wk = img.montre(1, fullscreen=fs)
+    img = jeu.image()
+    img.build()
+    img.setMouseCallback(get_mouse, [jeu])
+    while img.is_opened():
+        wk = img.show(1)
         match wk:
-            case 27: return
-            case 32: fs = not fs
             case 8:
                 r_i += 1
                 jeu.resolution(resolutions[r_i%len(resolutions)])
-                img = jeu.image()
-            case 65470: cv2.moveWindow(img.nom, 0, 0) # f1
-            case 65471: cv2.moveWindow(img.nom, 1920, 0) # f1
-            case -1: ...
-            case _: print(wk)
+                img, fs = jeu.image(), img.fullscreen
+                img.fullscreen = fs
 
 if __name__ == "__main__":
     main()

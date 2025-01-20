@@ -1,7 +1,7 @@
 from multiprocessing.connection import Client
 try: from echecs.jeu import echecs
 except: from jeu import echecs
-from tsanap import *
+from pyimager import *
 import time, sys
 
 def main(ip_port=None):

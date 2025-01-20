@@ -1,6 +1,6 @@
 from multiprocessing.connection import Listener
-try: from jeu import morpion
-except: from morpion.jeu import morpion
+try: from jeu import echecs
+except: from echecs.jeu import echecs
 import socket
 from _thread import *
 
