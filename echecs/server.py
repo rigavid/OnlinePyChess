@@ -54,8 +54,8 @@ class Server:
                 readable, writable, in_error = select.select((c1, c2), (c1, c2), (c1, c2), 2)
                 for r in readable:
                     if not r.recv(BUFS):
-                        if r==c1: c2.send(b"quitted")
-                        else: c2.send(b"quitted")
+                        if r==c1: c2.send("quitted".encode())
+                        else: c1.send("quitted".encode())
                         playing = False
                         break
                 if told:
@@ -122,11 +122,17 @@ class Server:
         c2.settimeout(1)
         games = 0
         while True:
-            cause_end = self.start_game(game, c1, c2, games%2==0)
-            time.sleep(0.01)
-            for c in (c1, c2): c.send("exit".encode())
-            c1.settimeout(60)
-            c2.settimeout(60)
+            try:
+                cause_end = self.start_game(game, c1, c2, games%2==0)
+                time.sleep(0.01)
+                for c in (c1, c2): c.send("exit".encode())
+                c1.settimeout(60)
+                c2.settimeout(60)
+            except (ConnectionResetError, BrokenPipeError) as e:
+                try: c2.send("quitted".encode())
+                except: pass
+                try: c1.send("quitted".encode())
+                except: pass
             try:
                 r1, r2 = eval(c1.recv(BUFS).decode()), eval(c2.recv(BUFS).decode())
                 replay = r1 and r2

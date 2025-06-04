@@ -562,6 +562,8 @@ class Chess:
         if "mate" in r and len(r) == 5:
             text = f"{self.n_j1 if r[-1] == "0" else self.n_j2} won\nby checkmate"
             self.pnts[int(r[-1])] += 1
+        if "quit" in r:
+            text = f"You won!\nOpponent quitted"
         elif "resign" in r:
             text = f"{self.n_j1 if r[-1] == "0" else self.n_j2} won\nby resignation"
             self.pnts[int(r[-1])] += 1
@@ -592,7 +594,7 @@ class Chess:
         while self.img.is_opened():
             self.img.show()
             try:
-                res = eval(self.client.recv())
+                res = self.client.recv() == "True"
                 self.client.client.setblocking(True)
                 return not res
             except TimeoutError: pass
@@ -609,9 +611,11 @@ class Chess:
                 else:
                     ask = self.ended_game(self.start_online())
                     client.send(str(not ask))
-                    if not ask: ask = self.rematch()
-                    if not ask: self.turn = not self.turn
-                    else: self.turn = True
+                    if not ask:
+                        self.turn = not self.turn
+                        ask = self.rematch()
+                    if ask:
+                        self.turn = True
                 self.restart()
                 time.sleep(1)
             except StopGame: return

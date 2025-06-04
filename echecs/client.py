@@ -69,7 +69,7 @@ class Client:
                 case "restart":
                     self.game.restart()
                     self.turn = not self.turn
-                case "quitted": self.close() ## Opponent has quited -> Victory
+                case "quitted": return "quit"
                 case "exit":
                     self.game.partie_finie()
                     return self.game.cause_fin
@@ -85,17 +85,19 @@ class Client:
 
     def start(self, game:chess.Chess) -> None:
         self.game = game
-        return self._start_()
+        try: return self._start_()
+        except:
+            self.close()
+            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.start(game)
 
     def close(self) -> None:
         self.client.close()
         print("Client closed.")
 
 def main() -> None:
-    # try:
     jeu = chess.Chess()
     jeu.start(Client())
-    # except: print("An error occured!")
 
 if __name__ == "__main__":
     main()
