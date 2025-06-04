@@ -119,6 +119,7 @@ class Server:
         c1.send(nj2.encode())
         c2.send(nj1.encode())
         game = chess.Chess(name=f"PyChess - {gameID}", j1=nj1, j2=nj2)
+        game.server = True
         self.games[gameID] = game
         time.sleep(WAIT)
         c1.setblocking(False)

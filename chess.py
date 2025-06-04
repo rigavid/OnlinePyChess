@@ -46,6 +46,7 @@ class Chess:
         pcs = [i+"." if i in "TR" else i for i in "TCFDRFCT"]
         return np.array([[p for p in pcs], ["P."]*8, *[[" "]*8]*4, ["p."]*8, [p.lower() for p in pcs]])
     def __init__(self, name="PyChess", j1="J1", j2="J2") -> None:
+        self.server = False
         self.offline = False
         self.turn = True
         self.pnts = [0, 0]
@@ -340,7 +341,7 @@ class Chess:
             cadre(self.img, a, b, self.marron, self.marron_f, self.ep*2*min(self.img.size())/1080)
             self.draw_piece(i if self.trait else i.lower(), a, b)
             x += 1
-        while self.img.is_opened():
+        while self.img.is_opened() or self.server:
             self.img.show()
             if self.img.mouse.new:
                 if self.img.mouse.event == cv2.EVENT_LBUTTONDOWN:
