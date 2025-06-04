@@ -65,15 +65,23 @@ class Server:
                         break
                 if told:
                     try:
+                        prom = False
                         if turn: c = c1 if game.trait else c2
                         else: c = c2 if game.trait else c1
                         data = c.recv(BUFS)
                         if data.decode() == "promotion":
+                            prom = True
                             chess.Server.promotion = c.recv(BUFS).decode()
+                            data = c.recv(BUFS)
                         move = eval(data.decode())
                         print(f"Received: <{move}>")
                         game.move(*move)
                         c = c1 if c2==c else c2
+                        if prom:
+                            c.send("promotion".encode())
+                            time.sleep(WAIT)
+                            c.send(chess.Server.promotion.encode())
+                            time.sleep(WAIT)
                         c.send("moved".encode())
                         time.sleep(WAIT)
                         c.send(data)

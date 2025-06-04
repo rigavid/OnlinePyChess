@@ -346,7 +346,7 @@ class Chess:
             cadre(self.img, a, b, self.marron, self.marron_f, self.ep*2*min(self.img.size())/1080)
             self.draw_piece(i if self.trait else i.lower(), a, b)
             x += 1
-        if server:
+        if self.server or Server.new:
             self.m[*p1] = Server.promotion
             return True
         while self.img.is_opened():

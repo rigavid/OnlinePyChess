@@ -33,9 +33,9 @@ class Client:
                 self.game.move(p1, p2)
                 if chess.Server.new:
                     chess.Server.new = False
-                    self.send("promotion".encode())
+                    self.send("promotion")
                     time.sleep(0.1)
-                    self.send(str(chess.Server.promotion).encode())
+                    self.send(str(chess.Server.promotion))
                     time.sleep(0.1)
                 return self.send(str((p1, p2)))
 
@@ -50,6 +50,10 @@ class Client:
         else: self.game.n_j2 = self.name
         return self.name
 
+    def promotion(self) -> None:
+        chess.Server.promotion = self.recv()
+        chess.Server.new = True
+
     def start_(self) -> None:
         self.connect()
         print("Ready to start game!")
@@ -60,6 +64,7 @@ class Client:
                 case "wait": pass
                 case "move": self.move()
                 case "moved": self.moved()
+                case "promotion": self.promotion()
                 case "setname":
                     self.name = self.recv()
                     if self.turn: self.game.n_j1 = self.name
