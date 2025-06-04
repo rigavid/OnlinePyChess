@@ -1,27 +1,12 @@
-## NOTHING WORKS NICELY BUT GOT NO PROBLEM BECAUSE I WON'T CONTINUE TO CODE THIS
-
- #####
-# T_T #
- #####
-  ###
-#######
-# ### #
-# ### #
-  ###
-  # #
-  # #
- ## ##
-
 import subprocess, multiprocessing, time
-try: import server, client
-except: from morpion import server, client
+import server, client
 
 def start_cli():
     subprocess.run(
         [
             "/bin/python",
             client.__file__,
-            f"{server.SERVER_IP}:{server.SERVER_PORT}"
+            f"localhost:{server.PORT}"
         ]
     )
 

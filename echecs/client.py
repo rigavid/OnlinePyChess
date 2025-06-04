@@ -1,39 +1,57 @@
-from multiprocessing.connection import Client
-try: from echecs.jeu import echecs
-except: from jeu import echecs
-from pyimager import *
-import time, sys
+from params_pychess import *
+import socket, chess
 
-def main(ip_port=None):
-    try:
-        address = ip_port if ip_port else input("Server address: ")
-        client = Client((address.split(":")[0], int(address.split(":")[1])) if ":" in address else (address, 1234))
-        global ID
-        ID = client.recv()
-        print(f"Connected as {ID}")
-        img = ... # TODO
-        img.montre(1)
-        if ip_port: cv2.moveWindow(img.name, 0 if ID == 0 else 1920, 0)
-        cv2.setMouseCallback(img.name, get_mouse, m)
-        fs = True if ip_port else False
-        timer = time.time()
-        while True: ## DONE Show image
-            wk = img.montre(1, fullscreen=fs)
-            if img.is_closed(): break
-            match wk:
-                case 27: break
-                case 32: fs = not fs
-                case 114: img = get_img(client)
-        print("End of client program.")
-        client.send("CLOSE")
-        print("Game closed")
-    except ConnectionRefusedError: print("Server undisponible.")
-    except KeyboardInterrupt: print("\rClient stoped.")
-    except EOFError: print("Server didn't respond!")
-    finally:
-        if replay: return main(ip_port)
-        else: print("Connection ended.")
+class Client:
+    def __init__(self, host="localhost", port=PORT, name=None) -> None:
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.host, self.port = host, port
+        self.name, self.name_adv = name, None
+
+    def recv(self) -> str:
+        data = self.client.recv(BUFS)
+        if not data: raise EOFError
+        msg = data.decode()
+        print(f"Received: <{msg}>")
+        return msg
+
+    def send(self, msg:str) -> None:
+        self.client.send(msg.encode())
+        print(f"Sent: <{msg}>")
+
+    def move(self) -> None: ## TODO Your turn
+        self.send(input(f"<{self.name}> Move: "))
+
+    def moved(self) -> None: ## TODO Opponent's move
+        ...
+
+    def get_name(self) -> str:
+        if self.name == None: self.name = input("Name: ")
+        if self.name == "": self.name = "_"
+        return self.name
+
+    def start(self, game:chess.Chess) -> None:
+        ## Define game correctly for yourself ##
+        self.client.connect((self.host, self.port))
+        while True:
+            command = self.recv()
+            match command:
+                case "wait": pass
+                case "move": self.move()
+                case "moved": self.moved()
+                case "setname": self.name = self.recv()
+                case "setnameadv": self.name_adv = self.recv()
+                case "name": self.send(self.get_name())
+                case "start": self.turn = bool(self.recv())
+                case "quitted": self.close() ## Opponent has quited -> Victory
+                case "exit": return
+                case _: print(command)
+    def close(self) -> None:
+        self.client.close()
+        print("Client closed.")
+
+def main() -> None:
+    jeu = chess.Chess()
+    jeu.start(Client())
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1: main(sys.argv[1])
-    else: main()
+    main()
