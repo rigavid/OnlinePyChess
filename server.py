@@ -5,6 +5,7 @@ from _thread import start_new_thread
 load_dotenv()
 PORT = int(os.getenv("PORT"))
 BUFS = chess.BUFS
+WAIT = 0.1
 
 class Server:
     def new_game_id(self) -> str:
@@ -72,9 +73,9 @@ class Server:
                         game.move(*move)
                         c = c1 if c2==c else c2
                         c.send("moved".encode())
-                        time.sleep(0.01)
+                        time.sleep(WAIT)
                         c.send(data)
-                        time.sleep(0.01)
+                        time.sleep(WAIT)
                         told = False
                         if game.partie_finie():
                             raise chess.EndGame
@@ -85,7 +86,7 @@ class Server:
                         c.send("wait".encode())
                         continue
                 else:
-                    time.sleep(0.01)
+                    time.sleep(WAIT)
                     if turn: c = c1 if game.trait else c2
                     else: c = c2 if game.trait else c1
                     c.send("move".encode())
@@ -95,31 +96,31 @@ class Server:
 
     def game_thread(self, c1:socket.socket, c2:socket.socket, gameID) -> None:
         for c in (c1, c2): c.send("start".encode())
-        time.sleep(0.01)
+        time.sleep(WAIT)
         c1.send("True".encode())
         c2.send("False".encode())
-        time.sleep(0.01)
+        time.sleep(WAIT)
         for c in (c1, c2): c.send("name".encode())
         nj1, nj2 = (c.recv(BUFS).decode() for c in (c1, c2))
         if nj1 == "_":
             nj1 = "Player1" if nj2 != "Player1" else "Player2"
             c1.send("setname".encode())
-            time.sleep(0.01)
+            time.sleep(WAIT)
             c1.send(nj1.encode())
         if nj2 == "_":
             nj2 = "Player2" if nj1 != "Player2" else "Player1"
             c2.send("setname".encode())
-            time.sleep(0.01)
+            time.sleep(WAIT)
             c2.send(nj2.encode())
         time.sleep(0.1)
         c1.send("setnameadv".encode())
         c2.send("setnameadv".encode())
-        time.sleep(0.01)
+        time.sleep(WAIT)
         c1.send(nj2.encode())
         c2.send(nj1.encode())
         game = chess.Chess(name=f"PyChess - {gameID}", j1=nj1, j2=nj2)
         self.games[gameID] = game
-        time.sleep(0.01)
+        time.sleep(WAIT)
         c1.setblocking(False)
         c2.setblocking(False)
         c1.settimeout(1)
@@ -128,7 +129,7 @@ class Server:
         while True:
             try:
                 cause_end = self.start_game(game, c1, c2, games%2==0)
-                time.sleep(0.01)
+                time.sleep(WAIT)
                 for c in (c1, c2): c.send("exit".encode())
                 c1.settimeout(60)
                 c2.settimeout(60)
@@ -145,7 +146,7 @@ class Server:
                     if r2: c2.send("False".encode())
                     break
                 for c in (c1, c2): c.send("True".encode())
-                time.sleep(0.01)
+                time.sleep(WAIT)
                 c1.settimeout(1)
                 c2.settimeout(1)
                 game.restart()
