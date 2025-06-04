@@ -22,7 +22,7 @@ class Server:
     def start(self, conections=2):
         self.server.bind((self.host, self.port))
         self.server.listen(conections)
-        print("Server started. Waiting for connections...")
+        print(f"Server started on port {self.port}. Waiting for connections...")
         while True:
             conn, addr = self.server.accept()
             self.clients.append(conn)
@@ -45,7 +45,56 @@ class Server:
             conn.send("wait".encode())
             time.sleep(0.1)
 
+    def start_game(self, game, c1, c2, turn=True) -> str:
+        print("Starting game turn's:", turn)
+        told = False
+        playing = True
+        try:
+            while playing:
+                readable, writable, in_error = select.select((c1, c2), (c1, c2), (c1, c2), 2)
+                for r in readable:
+                    if not r.recv(BUFS):
+                        if r==c1: c2.send(b"quitted")
+                        else: c2.send(b"quitted")
+                        playing = False
+                        break
+                if told:
+                    try:
+                        if turn: c = c1 if game.trait else c2
+                        else: c = c2 if game.trait else c1
+                        data = c.recv(BUFS)
+                        move = eval(data.decode())
+                        print(f"Received: <{move}>")
+                        game.move(*move)
+                        c = c1 if c2==c else c2
+                        c.send("moved".encode())
+                        time.sleep(0.01)
+                        c.send(data)
+                        time.sleep(0.01)
+                        told = False
+                        if game.partie_finie():
+                            raise chess.EndGame
+                    except TimeoutError:
+                        if turn: c = c2 if game.trait else c1
+                        else: c = c1 if game.trait else c2
+                        print("Timeout:", turn, game.trait)
+                        c.send("wait".encode())
+                        continue
+                else:
+                    time.sleep(0.01)
+                    if turn: c = c1 if game.trait else c2
+                    else: c = c2 if game.trait else c1
+                    c.send("move".encode())
+                    told = True
+        except chess.EndGame: return game.cause_fin
+        raise chess.StopGame
+
     def game_thread(self, c1:socket.socket, c2:socket.socket, gameID) -> None:
+        for c in (c1, c2): c.send("start".encode())
+        time.sleep(0.01)
+        c1.send("True".encode())
+        c2.send("False".encode())
+        time.sleep(0.01)
         for c in (c1, c2): c.send("name".encode())
         nj1, nj2 = (c.recv(BUFS).decode() for c in (c1, c2))
         if nj1 == "_":
@@ -58,6 +107,7 @@ class Server:
             c2.send("setname".encode())
             time.sleep(0.01)
             c2.send(nj2.encode())
+        time.sleep(0.1)
         c1.send("setnameadv".encode())
         c2.send("setnameadv".encode())
         time.sleep(0.01)
@@ -65,24 +115,32 @@ class Server:
         c2.send(nj1.encode())
         game = chess.Chess(name=f"PyChess - {gameID}", j1=nj1, j2=nj2)
         self.games[gameID] = game
-        print(game.__game_info__())
-        for c in (c1, c2): c.send("start".encode())
         time.sleep(0.01)
-        c1.send("True".encode())
-        c2.send("False".encode())
-        playing = True
-        while playing:
-            c = c1 if game.trait else c2
-            c.send("move".encode())
-            move = eval(c.recv(BUFS).decode())
-            game.move(*move)
-            readable, writable, in_error = select.select((c1, c2), (c1, c2), (c1, c2), 30)
-            for r in readable:
-                if not r.recv(BUFS):
-                    if r==c1: c2.send(b"quitted")
-                    else: c2.send(b"quitted")
-                    playing = False
+        c1.setblocking(False)
+        c2.setblocking(False)
+        c1.settimeout(1)
+        c2.settimeout(1)
+        games = 0
+        while True:
+            cause_end = self.start_game(game, c1, c2, games%2==0)
+            time.sleep(0.01)
+            for c in (c1, c2): c.send("exit".encode())
+            c1.settimeout(60)
+            c2.settimeout(60)
+            try:
+                r1, r2 = eval(c1.recv(BUFS).decode()), eval(c2.recv(BUFS).decode())
+                replay = r1 and r2
+                if not replay:
+                    if r1: c1.send("False".encode())
+                    if r2: c2.send("False".encode())
                     break
+                for c in (c1, c2): c.send("True".encode())
+                time.sleep(0.01)
+                c1.settimeout(1)
+                c2.settimeout(1)
+                game.restart()
+            except TimeoutError: break
+            games += 1
         c1.close()
         c2.close()
 

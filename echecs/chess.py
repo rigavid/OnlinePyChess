@@ -45,6 +45,7 @@ class Chess:
         return np.array([[p for p in pcs], ["P."]*8, *[[" "]*8]*4, ["p."]*8, [p.lower() for p in pcs]])
     def __init__(self, name="PyChess", j1="J1", j2="J2") -> None:
         self.offline = False
+        self.turn = True
         self.pnts = [0, 0]
         self.ep, self.size, self.lt = 5, 7, 2
         self.name, self.n_j1, self.n_j2 = name, j1, j2
@@ -104,7 +105,8 @@ class Chess:
         x -= self.echq[0][0]
         y -= self.echq[0][1]
         X, Y = self.sz_echq
-        return 7-int(y/Y*8), int(x/X*8)
+        if self.turn: return 7-int(y/Y*8), int(x/X*8)
+        else: return int(y/Y*8), 7-int(x/X*8)
     def get_cases_line(self, p1, p2) -> list:
         x1, y1, x2, y2 = *p1, *p2
         dx = (x2 - x1) // max(1, abs(x2 - x1))
@@ -177,14 +179,24 @@ class Chess:
         self.img.img = copy.deepcopy(self.img_)
         ## Échiquier ##
         if self.est_echec(self.trait):
-            self.img.rectangle(*self.cases[*self.where_is_king(self.trait)], COL.red, 0)
+            if self.turn: self.img.rectangle(*self.cases[*self.where_is_king(self.trait)], COL.red, 0)
+            else: self.img.rectangle(*self.cases[*(7-i for i in self.where_is_king(self.trait))], COL.red, 0)
         self.img.rectangle(self.cases[-1,0][0], self.cases[0,-1][-1], self.gris, self.ep*min(self.img.size())/1080, self.lt)
-        for x in range(8):
-            for y in range(8):
-                self.draw_piece(self.matrix[x, y][0], *self.cases[x, y])
+        if self.turn:
+            for x in range(8):
+                for y in range(8):
+                    self.draw_piece(self.matrix[x, y][0], *self.cases[x, y])
+        else:
+            for x in range(8):
+                for y in range(8):
+                    self.draw_piece(self.matrix[7-x, 7-y][0], *self.cases[x, y])
         if self.last_move != None:
-            for i in self.last_move:
-                self.img.rectangle(*self.cases[*i], COL.cyan, self.ep)
+            if self.turn:
+                for i in self.last_move:
+                    self.img.rectangle(*self.cases[*i], COL.cyan, self.ep)
+            else:
+                for i in self.last_move:
+                    self.img.rectangle(*self.cases[*(7-j for j in i)], COL.cyan, self.ep)
         ## Tables joueurs ##
         pj1, pj2 = self.get_points()
         for jr, tb in (((pj1, self.n_j1), self.tj1), ((pj2, self.n_j2), self.tj2)):
@@ -224,10 +236,17 @@ class Chess:
         d = dist(ptt2, ptt1) / 9
         # Côtés de l'échiquier
         img.rectangle(ptt1, ptt4, [157, 113, 83], 0)
-        for n in range(8):
-            for p in [(d*(n+1), d/4), (d*(n+1), M - d/4)]:
-                for args in (("ABCDEFGH"[n], p), ("87654321"[n], p[::-1])):
-                    img.text(*args, COL.black, ep*0.6, sz, 0, self.lt)
+        print(f"{self.turn=}")
+        if self.turn:
+            for n in range(8):
+                for p in [(d*(n+1), d/4), (d*(n+1), M - d/4)]:
+                    for args in (("ABCDEFGH"[n], p), ("87654321"[n], p[::-1])):
+                        img.text(*args, COL.black, ep*0.6, sz, 0, self.lt)
+        else:
+            for n in range(8):
+                for p in [(d*(n+1), d/4), (d*(n+1), M - d/4)]:
+                    for args in (("ABCDEFGH"[::-1][n], p), ("87654321"[::-1][n], p[::-1])):
+                        img.text(*args, COL.black, ep*0.6, sz, 0, self.lt)
         # Remplissage des coins de l'échequier
         for n, p in enumerate([ptt1, ptt2, ptt4, ptt3]):
             img.rectangle(p, coosCircle(p, square_root(((d/2)**2)*2), 90*n+45), COL.new("3d3d3d"), 0)
@@ -269,7 +288,7 @@ class Chess:
             img.line((round(ptt1[0]+d*(i+0.5)),ptt1[1]), (round(ptt1[0]+d*(i+0.5)),ptt3[1]), col, ep, self.lt)
             img.line((ptt1[0],round(ptt1[1]+d*(i+0.5))), (ptt2[0],round(ptt1[1]+d*(i+0.5))), col, ep, self.lt)
         for x in range(8):
-            for y in range(8): img.rectangle(*self.cases[x, y], self.marron if x%2==y%2 else self.noir, 0)
+            for y in range(8): img.rectangle(*self.cases[x, y], self.marron if x%2!=y%2 else self.noir, 0)
         img.rectangle(ptt1, ptt4, col, ep)
         # Points à être utilisés par la suite
         self.echq = self.cases[-1,0,0], self.cases[0,-1,-1]
@@ -278,6 +297,7 @@ class Chess:
         ct = ct_cr(p1, p2, p3, p4)
         self.tj1 = self.draw_player_table(img, *(pt_sg(p, pt_sg(ct_sg(p3, p4), ct, 2), 2) for p in (ct_sg(p1, p3), p4)))
         self.tj2 = self.draw_player_table(img, *(pt_sg(p, pt_sg(ct_sg(p1, p2), ct, 2), 2) for p in (p1, ct_sg(p2, p4))))
+        if not self.turn: self.tj1, self.tj2 = self.tj2, self.tj1
         self.img_ = copy.deepcopy(img.img)
         return img
     def draw_piece(self, p, a, b, c=3) -> None:
@@ -439,12 +459,14 @@ class Chess:
         p1 = self.get_case_click(True)
         while self.img.is_opened():
             self.img.show()
-            self.img.rectangle(*self.cases[*p1], COL.green, self.ep)
+            if self.turn: self.img.rectangle(*self.cases[*p1], COL.green, self.ep)
+            else: self.img.rectangle(*self.cases[*(7-i for i in p1)], COL.green, self.ep)
             for x in range(8):
                 for y in range(8):
                     self.m = copy.deepcopy(self.matrix)
                     if self.legal(p1, (x, y), True):
-                        self.img.circle(ct_sg(*self.cases[x, y]), self.ep*3, COL.purple, 0, self.lt)
+                        if self.turn: self.img.circle(ct_sg(*self.cases[x, y]), self.ep*3, COL.purple, 0, self.lt)
+                        else: self.img.circle(ct_sg(*self.cases[7-x, 7-y]), self.ep*3, COL.purple, 0, self.lt)
             p2 = self.get_case_click()
             if not self.matrix[*p2] in " .·" and self.matrix[*p2].isupper() == self.trait:
                 self.image()
@@ -492,13 +514,10 @@ class Chess:
             try: self.move(*self.get_move())
             except EndGame: return self.cause_fin
         raise StopGame
-    def online_move(self) -> None: ## TODO
-        ...
     def start_online(self) -> str:
         self.img.img = self.new_img()
         self.image()
-        self.client.start(self)
-        return self.cause_fin
+        return self.client.start(self)
     def menu(self) -> None:
         self.image()
         m = self.img.mouse
@@ -563,6 +582,20 @@ class Chess:
                     elif clicked_in(m.pos, menu_coos):
                         m.r = "Wait"
                         return True
+    def rematch(self) -> bool:
+        p1, p4 = self.cases[-1,0][0], self.cases[0,-1][-1]
+        p2, p3 = [p4[0], p1[1]], [p1[0], p4[1]]
+        results_table = [pt_sg(ct_sg(p1, p3), ct_sg(p1, p2)), pt_sg(ct_sg(p2, p4), ct_sg(p3, p4))]
+        cadre(self.img, *results_table, self.marron, self.marron_f, self.ep, self.lt)
+        self.img.text(f"Waiting for {self.n_j2}\nto rematch", ct_sg(*results_table), self.noir, self.ep, self.size, 0, self.lt)
+        self.client.client.settimeout(1)
+        while self.img.is_opened():
+            self.img.show()
+            try:
+                res = eval(self.client.recv())
+                self.client.client.setblocking(True)
+                return not res
+            except TimeoutError: pass
     def start(self, client=None) -> None:
         self.client = client
         ask = True
@@ -570,8 +603,15 @@ class Chess:
             try:
                 if ask:
                     if not self.menu(): raise StopGame
-                if self.offline: ask = self.ended_game(self.start_offline())
-                else: ask = self.ended_game(self.start_online())
+                if self.offline:
+                    self.turn = True
+                    ask = self.ended_game(self.start_offline())
+                else:
+                    ask = self.ended_game(self.start_online())
+                    client.send(str(not ask))
+                    if not ask: ask = self.rematch()
+                    if not ask: self.turn = not self.turn
+                    else: self.turn = True
                 self.restart()
                 time.sleep(1)
             except StopGame: return
