@@ -1,5 +1,5 @@
 from dotenv import load_dotenv, dotenv_values
-import socket, chess, os
+import socket, chess, os, time
 
 load_dotenv()
 
@@ -31,6 +31,12 @@ class Client:
             p1, p2 = self.game.get_move()
             if self.game.can_move(p1, p2):
                 self.game.move(p1, p2)
+                if chess.Server.new:
+                    chess.Server.new = False
+                    self.send("promotion".encode())
+                    time.sleep(0.1)
+                    self.send(str(chess.Server.promotion).encode())
+                    time.sleep(0.1)
                 return self.send(str((p1, p2)))
 
     def moved(self) -> None:
@@ -91,10 +97,6 @@ class Client:
     def start(self, game:chess.Chess) -> None:
         self.game = game
         return self._start_()
-        # except:
-            # self.close()
-            # self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            # self.start(game)
 
     def close(self) -> None:
         self.client.close()

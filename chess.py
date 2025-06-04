@@ -33,6 +33,11 @@ def disquette(img, c1, c2, c3, c4, ep, lt, dir=None) -> None:
 
 class StopGame(Exception): pass
 class EndGame(Exception): pass
+
+class Server:
+    promotion = None
+    new = False
+
 class Chess:
     ## Vars ##
     gris = [30, 30, 30]
@@ -341,13 +346,18 @@ class Chess:
             cadre(self.img, a, b, self.marron, self.marron_f, self.ep*2*min(self.img.size())/1080)
             self.draw_piece(i if self.trait else i.lower(), a, b)
             x += 1
-        while self.img.is_opened() or self.server:
+        if server:
+            self.m[*p1] = Server.promotion
+            return True
+        while self.img.is_opened():
             self.img.show()
             if self.img.mouse.new:
                 if self.img.mouse.event == cv2.EVENT_LBUTTONDOWN:
                     for i in range(len(pieces)):
                         if clicked_in(self.img.mouse.pos, pieces[i]):
                             self.m[*p1] = p[i] if self.trait else p[i].lower()
+                            Server.promotion = p[i]
+                            Server.new = True
                             return True
                     return False
         raise StopGame

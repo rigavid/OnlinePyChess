@@ -68,6 +68,8 @@ class Server:
                         if turn: c = c1 if game.trait else c2
                         else: c = c2 if game.trait else c1
                         data = c.recv(BUFS)
+                        if data.decode() == "promotion":
+                            chess.Server.promotion = c.recv(BUFS).decode()
                         move = eval(data.decode())
                         print(f"Received: <{move}>")
                         game.move(*move)
