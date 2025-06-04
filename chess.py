@@ -1,6 +1,8 @@
 from pyimager import *
 import time, json
 
+BUFS = 1024
+
 savesFile = f"{"/".join(i for i in __file__.split("/")[:-1:])}/pygames.json"
 try:
     with open(savesFile, "x", encoding="utf8"): pass

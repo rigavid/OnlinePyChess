@@ -1,6 +1,10 @@
-from params_pychess import *
+from dotenv import load_dotenv, dotenv_values
+import socket, select, time, chess, os
 from _thread import start_new_thread
-import socket, select, time, chess
+
+load_dotenv()
+PORT = int(os.getenv("PORT"))
+BUFS = chess.BUFS
 
 class Server:
     def new_game_id(self) -> str:

@@ -1,8 +1,10 @@
-from params_pychess import *
-import socket, chess
+from dotenv import load_dotenv, dotenv_values
+import socket, chess, os
+
+load_dotenv()
 
 class Client:
-    def __init__(self, host="localhost", port=PORT, name=None) -> None:
+    def __init__(self, host="localhost", port=int(os.getenv("PORT")), name=os.getenv("NAME")) -> None:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.host, self.port = host, port
         self.name, self.name_adv = name, None
@@ -12,7 +14,7 @@ class Client:
         except OSError: pass
 
     def recv(self) -> str:
-        data = self.client.recv(BUFS)
+        data = self.client.recv(chess.BUFS)
         if not data: raise EOFError
         msg = data.decode()
         print(f"Received: <{msg}>")
@@ -85,11 +87,11 @@ class Client:
 
     def start(self, game:chess.Chess) -> None:
         self.game = game
-        try: return self._start_()
-        except:
-            self.close()
-            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.start(game)
+        return self._start_()
+        # except:
+            # self.close()
+            # self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            # self.start(game)
 
     def close(self) -> None:
         self.client.close()
