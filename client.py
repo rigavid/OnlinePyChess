@@ -8,6 +8,7 @@ class Client:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.host, self.port = host, port
         self.name, self.name_adv = name, None
+        self.turn = False
 
     def connect(self) -> None:
         try: self.client.connect((self.host, self.port))
@@ -65,7 +66,9 @@ class Client:
                     self.game.image()
                 case "name": self.send(self.get_name())
                 case "start":
-                    self.game.turn = self.turn = eval(self.recv())
+                    turn = eval(self.recv())
+                    self.game.turn = turn
+                    self.turn = turn
                     self.game.img.img = self.game.new_img()
                     self.game.image()
                 case "restart":
