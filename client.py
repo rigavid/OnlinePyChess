@@ -4,7 +4,7 @@ import socket, chess, os
 load_dotenv()
 
 class Client:
-    def __init__(self, host="localhost", port=int(os.getenv("PORT")), name=os.getenv("NAME")) -> None:
+    def __init__(self, host=os.getenv("PORT"), port=int(os.getenv("PORT")), name=os.getenv("NAME")) -> None:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.host, self.port = host, port
         self.name, self.name_adv = name, None
