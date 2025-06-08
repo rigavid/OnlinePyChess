@@ -61,6 +61,7 @@ class Server:
                     if not r.recv(BUFS):
                         if r==c1: c2.send("quitted".encode())
                         else: c1.send("quitted".encode())
+                        time.sleep(WAIT)
                         playing = False
                         break
                 if told:
